@@ -14,11 +14,22 @@
 #include <QMessageBox>
 #include "mainwindow.h"
 
+int zhuangtai = 0;
+QString usr;
+QString pas;
+
 void Regui::closeEvent(QCloseEvent *event)
 {
     Q_UNUSED(event);
-    MainWindow *w=new MainWindow();
-    w->show();
+    if(zhuangtai==4){
+        MainWindow *w=new MainWindow(0,usr,pas);
+        w->show();
+    }
+    else{
+        MainWindow *w=new MainWindow();
+        w->show();
+    }
+
 }
 
 
@@ -153,8 +164,8 @@ int Regui::on_pushButton_clicked()
             return 0;
         }
 
-        qDebug() << "已连接上服务器，请求登陆中...";
-        send(sock, sendBuf, 100, 0);    //发送登录信息
+        qDebug() << "已连接上服务器，请求注册中...";
+        send(sock, sendBuf, 100, 0);    //发送注册信息
 
 
         char recvBuf2[100];
@@ -165,18 +176,32 @@ int Regui::on_pushButton_clicked()
 
         WSACleanup();
 
-        if(mi == "1"){
-                qDebug() << "登陆成功！";
+        zhuangtai = mi.toInt();
+
+        /**
+                     *	服务端返回的值
+                     *	1. 登陆成功
+                     *	2. 登陆失败用户名不存在
+                     *	3. 登陆失败密码错误
+                     *	4. 注册成功
+                     *	5. 注册失败用户名已存在
+                     *	6. 注册失败数据库插入失败
+                     */
+
+        if(zhuangtai == 4){
+                qDebug() << "注册成功！";
+                QMessageBox::information(NULL, "恭喜", "注册成功！");
+                usr = ui->lineEdit->text();
+                pas = ui->lineEdit_2->text();
+                this->close();//关闭窗口
             }
-        else if(mi == "2"){
-            QMessageBox::critical(NULL, "错误", "用户名不存在！");
-        }
-        else if(mi == "3"){
-            QMessageBox::critical(NULL, "错误", "密码错误！");
+        else if(zhuangtai == 5){
+            QMessageBox::critical(NULL, "错误", "用户名已存在，请重新输入其他用户名！");
         }
         else{
-            QMessageBox::critical(NULL, "错误", "登陆失败！");
+            QMessageBox::critical(NULL, "错误", "注册失败！");
         }
+
 
 
 

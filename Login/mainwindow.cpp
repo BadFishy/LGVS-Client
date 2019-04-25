@@ -17,6 +17,26 @@
 
 using namespace std;
 
+MainWindow::MainWindow(QWidget *parent, QString usr, QString pas) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+
+
+    ui->setupUi(this);
+    this->setFixedSize( this->width (),this->height ());
+
+    this->setWindowTitle("凉糕对战平台 - LGVS");
+
+    QRegExp regx("[a-zA-Z0-9]+$");
+    QValidator *validator = new QRegExpValidator(regx, ui->lineEdit );
+    ui->lineEdit->setValidator(validator);  //使用户名只能为英文数字
+    ui->lineEdit->setAttribute(Qt::WA_InputMethodEnabled, false);   //屏蔽中文输入法
+    ui->lineEdit->setText(usr);
+    ui->lineEdit_2->setText(pas);
+
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
