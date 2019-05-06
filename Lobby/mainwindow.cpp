@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include "QMessageBox.h"
 #include "QtWidgets"
+#include "time.h"
+#include "QDateTime"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -61,8 +63,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->message->document()->setMaximumBlockCount(100);//设置信息栏最多100行
 
     //********************************************************************************
+    ui->ready->hide();
     f5_games();
-
 
 
 }
@@ -117,7 +119,7 @@ void MainWindow::f5_rooms(){
         break;
     }
     ui->title->setText(title);
-
+    ui->ready->hide();
     ui->BAK->setText("返回");
     ui->games->QTableWidget::clear();
     ui->games->setColumnCount(4);//设置表格列数
@@ -137,6 +139,7 @@ void MainWindow::f5_rooms(){
 }
 
 void MainWindow::f5_home(){
+    ui->ready->show();
     ui->title->setText("房间");
     ui->games->QTableWidget::clear();
     ui->games->setColumnCount(4);//设置表格列数
@@ -166,7 +169,7 @@ bool MainWindow::on_games_doubleClicked(const QModelIndex &index)
         QString cid = gameid->text(); //获取第1列内容
         QTableWidgetItem *gamename = items.at(1);
         QString gname = gamename->text(); //获取第3列内容
-        ui->message->append("用户操作：打开游戏["+cid+gname+"]房间大厅");
+        put("用户操作：打开游戏["+cid+gname+"]房间大厅");
         lobby_flag ++;
         nowcid = cid.toInt();
         on_F5_clicked();
@@ -176,7 +179,7 @@ bool MainWindow::on_games_doubleClicked(const QModelIndex &index)
         QList<QTableWidgetItem*> items = ui->games->selectedItems();
         QTableWidgetItem *gameid = items.at(0);
         QString hid = gameid->text(); //获取第1列内容
-        ui->message->append("用户操作：打开房间["+hid+"]");
+        put("用户操作：打开房间["+hid+"]");
         lobby_flag ++;
         on_F5_clicked();
         return true;
@@ -191,17 +194,40 @@ bool MainWindow::on_BAK_clicked()
         this->close();
     }
     else{
-        ui->message->append("用户操作：返回");
+        put("用户操作：返回");
         lobby_flag--;
         on_F5_clicked();
     }
 
 }
 
-
-void MainWindow::on_F5_clicked()
+time_t f5time = time(0);
+int timer =0;
+bool MainWindow::on_F5_clicked()
 {
+    ui->F5->setEnabled(false);
+
+    if(time(0) - f5time<2){
+        timer++;
+
+        if(timer>=3){
+            qDebug() << "刷新太快";
+            put("系统提示：操作太快，喝杯茶休息会儿");
+            //Sleep(5000);
+            ui->F5->setEnabled(true);
+            return false;
+        }
+        else{
+            f5time = time(0);
+        }
+    }
+    else{
+        timer=0;
+    }
+
+
     qDebug() << "刷新";
+    //put("用户操作：刷新");
     if(lobby_flag==0){
         f5_games();
     }
@@ -211,6 +237,9 @@ void MainWindow::on_F5_clicked()
     else if(lobby_flag==2){
         f5_home();
     }
+    f5time = time(0);
+    ui->F5->setEnabled(true);
+    return true;
 }
 
 
@@ -306,3 +335,14 @@ bool MainWindow::addPlayer(QString uid,QString username, QString regtime,int mon
 }
 
 
+void MainWindow::put(QString xx){//向底部信息栏发送消息
+    QDateTime current_date_time =QDateTime::currentDateTime();
+    QString nowtime =current_date_time.toString("hh:mm:ss");
+    ui->message->append("["+nowtime+"]"+xx);
+}
+
+
+void MainWindow::on_ready_clicked()
+{
+
+}

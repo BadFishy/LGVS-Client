@@ -22,12 +22,16 @@ public:
     void f5_rooms();
     void f5_home();
 
+    void put(QString xx);
+
 private slots:
-    void on_F5_clicked();
+    bool on_F5_clicked();
 
     bool on_games_doubleClicked(const QModelIndex &index);
 
     bool on_BAK_clicked();
+
+    void on_ready_clicked();
 
 private:
     Ui::MainWindow *ui;

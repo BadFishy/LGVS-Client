@@ -57,6 +57,16 @@
       <item>
        <layout class="QHBoxLayout" name="tools">
         <item>
+         <widget class="QPushButton" name="ready">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>准备</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="F5">
           <property name="text">
            <string>刷新</string>
