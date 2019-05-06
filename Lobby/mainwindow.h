@@ -15,19 +15,24 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     bool addGame(QPixmap pix,QString gamename,int maxman,QString cid="NULL");
+    bool addRome(QString hid,QString homename, int man, int maxman,int state);
+    bool addPlayer(QString uid,QString username, QString regtime,int money);
 
-    void testSlot(int row,int column);
-
+    void f5_games();
+    void f5_rooms();
+    void f5_home();
 
 private slots:
     void on_F5_clicked();
 
-    void on_games_doubleClicked(const QModelIndex &index);
+    bool on_games_doubleClicked(const QModelIndex &index);
+
+    bool on_BAK_clicked();
 
 private:
     Ui::MainWindow *ui;
 };
 
-
+void f5_games(Ui::MainWindow ui);
 
 #endif // MAINWINDOW_H
