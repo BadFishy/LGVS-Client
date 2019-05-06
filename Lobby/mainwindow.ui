@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>LGVS-Lobby</string>
   </property>
-  <widget class="QWidget" name="centralWidget">
+  <widget class="QWidget" name="main">
    <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,2">
     <property name="leftMargin">
      <number>6</number>
@@ -34,12 +34,12 @@
      <number>6</number>
     </property>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_3" stretch="5,2">
+     <layout class="QVBoxLayout" name="labby" stretch="5,2">
       <property name="rightMargin">
        <number>0</number>
       </property>
       <item>
-       <widget class="QTableWidget" name="tableWidget">
+       <widget class="QTableWidget" name="games">
         <property name="minimumSize">
          <size>
           <width>340</width>
@@ -75,7 +75,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QTextEdit" name="textEdit">
+       <widget class="QTextEdit" name="message">
         <property name="minimumSize">
          <size>
           <width>340</width>
@@ -90,7 +90,7 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="info">
       <property name="leftMargin">
        <number>0</number>
       </property>
@@ -103,17 +103,17 @@
          <number>9</number>
         </property>
         <item>
-         <widget class="QLabel" name="F5">
+         <widget class="ClickableLabel" name="F5">
           <property name="minimumSize">
            <size>
-            <width>36</width>
-            <height>36</height>
+            <width>16</width>
+            <height>16</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>36</width>
-            <height>36</height>
+            <width>16</width>
+            <height>16</height>
            </size>
           </property>
           <property name="text">
@@ -155,7 +155,7 @@
        </layout>
       </item>
       <item>
-       <widget class="QListWidget" name="listWidget">
+       <widget class="QListWidget" name="userinfo">
         <property name="minimumSize">
          <size>
           <width>150</width>
@@ -168,6 +168,34 @@
           <height>16777215</height>
          </size>
         </property>
+        <item>
+         <property name="text">
+          <string>用户名：Lulu</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignLeading|AlignVCenter</set>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>UID：1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>积分：1000</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>上次登陆时间：</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1997-07-18 14:00</string>
+         </property>
+        </item>
        </widget>
       </item>
      </layout>
@@ -176,6 +204,17 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>ClickableLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">clickablelabel.h</header>
+   <slots>
+    <signal>clicked()</signal>
+    <slot>onClicked()</slot>
+   </slots>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

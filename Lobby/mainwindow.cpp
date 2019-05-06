@@ -14,47 +14,51 @@ MainWindow::MainWindow(QWidget *parent) :
     palette.setColor(QPalette::Background, Qt::white);
     this->setPalette(palette);//设置背景为白色
     //********************************************************************************
-    ui->tableWidget->setColumnCount(4);//设置表格QTableWidget列
-    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);    //设置表格QTableWidget不可编辑
+    ui->games->setColumnCount(4);//设置表格QTableWidget列
+    ui->games->setEditTriggers(QAbstractItemView::NoEditTriggers);    //设置表格QTableWidget不可编辑
     //使表格QTableWidget选中选择整行
-    ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->games->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->games->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-    ui->tableWidget->horizontalHeader()->setFocusPolicy(Qt::NoFocus); //设置表头不可选
-    ui->tableWidget->setFocusPolicy(Qt::NoFocus);//无虚线
-    //ui->tableWidget->horizontalHeader()->setStretchLastSection(true);//最后一栏自适应长度
-    ui->tableWidget->setShowGrid(false); //设置不显示格子线
-    ui->tableWidget->verticalHeader()->setVisible(false); //设置垂直头不可见
-    ui->tableWidget->setStyleSheet("selection-background-color:lightblue;"); //设置选中背景色
-    //ui->tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{background:skyblue;}"); //设置表头背景色
-    ui->tableWidget->horizontalHeader()->setHighlightSections(false);  //防止表头塌陷
+    ui->games->horizontalHeader()->setFocusPolicy(Qt::NoFocus); //设置表头不可选
+    ui->games->setFocusPolicy(Qt::NoFocus);//无虚线
+    //ui->games->horizontalHeader()->setStretchLastSection(true);//最后一栏自适应长度
+    ui->games->setShowGrid(false); //设置不显示格子线
+    ui->games->verticalHeader()->setVisible(false); //设置垂直头不可见
+    ui->games->setStyleSheet("selection-background-color:lightblue;"); //设置选中背景色
+    //ui->games->horizontalHeader()->setStyleSheet("QHeaderView::section{background:skyblue;}"); //设置表头背景色
+    ui->games->horizontalHeader()->setHighlightSections(false);  //防止表头塌陷
 
     //设置水平、垂直滚动条样式
-    ui->tableWidget->horizontalScrollBar()->setStyleSheet("QScrollBar{background:transparent; height:10px;}"
+    ui->games->horizontalScrollBar()->setStyleSheet("QScrollBar{background:transparent; height:10px;}"
     "QScrollBar::handle{background:lightgray; border:2px solid transparent; border-radius:5px;}"
     "QScrollBar::handle:hover{background:gray;}"
     "QScrollBar::sub-line{background:transparent;}"
     "QScrollBar::add-line{background:transparent;}");
 
-    ui->tableWidget->verticalScrollBar()->setStyleSheet("QScrollBar{background:transparent; width: 10px;}"
+    ui->games->verticalScrollBar()->setStyleSheet("QScrollBar{background:transparent; width: 10px;}"
     "QScrollBar::handle{background:lightgray; border:2px solid transparent; border-radius:5px;}"
     "QScrollBar::handle:hover{background:gray;}"
     "QScrollBar::sub-line{background:transparent;}"
     "QScrollBar::add-line{background:transparent;}");
 
     // 使列宽不能拖动
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    ui->tableWidget->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    //ui->tableWidget->horizontalHeader()->setSectionResizeMode( QHeaderView::Stretch );
+    ui->games->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    ui->games->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    //ui->games->horizontalHeader()->setSectionResizeMode( QHeaderView::Stretch );
 
     //********************************************************************************
-    QPixmap f5("C:\\Git\\LGVS-Client\\Lobby\\res\\f5.png");  //图片路径
-    ui->F5->setPixmap(QPixmap(f5).scaled(32,32));
-    ui->F5->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);//图片居中
+    QPixmap f5("C:\\Git\\LGVS-Client\\Lobby\\res\\f5_16.png");  //图片路径
+    ui->F5->setPixmap(QPixmap(f5).scaled(16,16));
+    ui->F5->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);//图片居中
 
     //********************************************************************************
-    addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\1.png",(QString)"五子棋",20);
-    addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\2.png",(QString)"中国象棋",20);
+    //ui->userinfo->setEditTriggers(QAbstractItemView::NoEditTriggers);    //设置表格QTableWidget不可编辑
+    ui->message->document()->setMaximumBlockCount(100);//设置信息栏最多100行
+
+    //********************************************************************************
+    addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\1.png",(QString)"五子棋",20,"10086");
+    addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\2.png",(QString)"中国象棋",20,"10010");
     addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\1.png",(QString)"星际争霸II",20);
     addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\2.png",(QString)"中国象棋",20);
     addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\1.png",(QString)"五子棋",20);
@@ -70,12 +74,42 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-bool MainWindow::addGame(QPixmap pixpath, QString gamename, int maxman)
+
+
+void MainWindow::on_F5_clicked()
 {
-    int table_i = (ui->tableWidget->rowCount());//获取表目前的行数
-    ui->tableWidget->setRowCount(table_i+1);//使表增加一行
-    ui->tableWidget->setItem(table_i,0,new QTableWidgetItem(QString::number(table_i+1)));//自定编号
-    ui->tableWidget->item(table_i, 0)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+    qDebug() << "刷新";
+}
+
+
+char labby_flag = 0;
+void MainWindow::on_games_doubleClicked(const QModelIndex &index)
+{
+            QList<QTableWidgetItem*> items = ui->games->selectedItems();
+            QTableWidgetItem *gameid = items.at(0);
+            QString cid = gameid->text(); //获取第1列内容
+            QTableWidgetItem *gamename = items.at(1);
+            QString gname = gamename->text(); //获取第3列内容
+            ui->message->append("用户操作：打开游戏["+cid+gname+"]房间大厅");
+            labby_flag =1;
+            //dakaidating
+}
+
+
+
+
+bool MainWindow::addGame(QPixmap pixpath, QString gamename, int maxman,QString cid)
+{
+    int table_i = (ui->games->rowCount());//获取表目前的行数
+    ui->games->setRowCount(table_i+1);//使表增加一行
+    if(cid=="NULL"){
+            ui->games->setItem(table_i,0,new QTableWidgetItem(QString::number(table_i+1)));//自定编号
+    }
+    else{
+        ui->games->setItem(table_i,0,new QTableWidgetItem(cid));//自定编号
+    }
+
+    ui->games->item(table_i, 0)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
     QPixmap pix(pixpath);
     QLabel *label = new QLabel;
@@ -83,30 +117,17 @@ bool MainWindow::addGame(QPixmap pixpath, QString gamename, int maxman)
     label->setMinimumSize( 80, 80 );
     label->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);//图片居中
 
-    ui->tableWidget->setCellWidget(table_i,1,label);//显示图片label
-//    int namelen = gamename.toLocal8Bit().length();
-//    if( namelen <= 28){
-//        for(int i = 0;i<(28-namelen)/2;i++){
-//            gamename = " " +  gamename;
-//        }
-//        for(int i = (28-namelen)/2+namelen;i<28;i++){
-//            gamename += " ";
-//        }
+    ui->games->setCellWidget(table_i,1,label);//显示图片label
 
-//        ui->tableWidget->setItem(table_i,2,new QTableWidgetItem(gamename));
-//    }
-//    else {
-//        ui->tableWidget->setItem(table_i,2,new QTableWidgetItem("游戏名过长（大于28字符）"));
-//    }
-    ui->tableWidget->setItem(table_i,2,new QTableWidgetItem(gamename));
-    ui->tableWidget->item(table_i, 2)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+    ui->games->setItem(table_i,2,new QTableWidgetItem(gamename));
+    ui->games->item(table_i, 2)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-    ui->tableWidget->setItem(table_i,3,new QTableWidgetItem("0/"+QString::number(maxman)));
-    ui->tableWidget->item(table_i, 3)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+    ui->games->setItem(table_i,3,new QTableWidgetItem("0/"+QString::number(maxman)));
+    ui->games->item(table_i, 3)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
     //行和列的大小设为与内容相匹配
-    ui->tableWidget->resizeColumnsToContents();
-    ui->tableWidget->resizeRowsToContents();
-
-
+    ui->games->resizeColumnsToContents();
+    ui->games->resizeRowsToContents();
 }
+
+
