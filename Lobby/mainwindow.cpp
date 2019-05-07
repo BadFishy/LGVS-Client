@@ -201,30 +201,8 @@ bool MainWindow::on_BAK_clicked()
 
 }
 
-time_t f5time = time(0);
-int timer =0;
 bool MainWindow::on_F5_clicked()
 {
-    ui->F5->setEnabled(false);
-
-    if(time(0) - f5time<2){
-        timer++;
-
-        if(timer>=3){
-            qDebug() << "刷新太快";
-            put("系统提示：操作太快，喝杯茶休息会儿");
-            //Sleep(5000);
-            ui->F5->setEnabled(true);
-            return false;
-        }
-        else{
-            f5time = time(0);
-        }
-    }
-    else{
-        timer=0;
-    }
-
 
     qDebug() << "刷新";
     //put("用户操作：刷新");
@@ -237,8 +215,7 @@ bool MainWindow::on_F5_clicked()
     else if(lobby_flag==2){
         f5_home();
     }
-    f5time = time(0);
-    ui->F5->setEnabled(true);
+
     return true;
 }
 
