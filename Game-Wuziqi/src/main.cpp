@@ -4,23 +4,26 @@
 int main (int argc, char *argv[])
 {
     QApplication a(argc,argv);
-    QString str;
+    QString str[4];
 
 
 
     if(argc>1){
-        str = QString(QLatin1String(argv[1]));
+        for(int i=0;i<argc;i++){
+            str[i] = QString(QLatin1String(argv[i+1]));
+        }
+
     }
     else{
-        str = "0";
+        str[0] = "0";
     }
 
     Chess c(0,str);
 
-    if(str=="0"){
+    if(str[0]=="0"){
         c.setWindowTitle("五子棋 —— 主场黑棋");
     }
-    else if(str=="1"){
+    else if(str[0]=="1"){
         c.setWindowTitle("五子棋 —— 客场白棋");
     }
 
