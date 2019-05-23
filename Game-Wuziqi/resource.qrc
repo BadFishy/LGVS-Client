@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>rec/dilei.jpg</file>
+        <file>rec/dilei2.png</file>
+    </qresource>
+</RCC>
