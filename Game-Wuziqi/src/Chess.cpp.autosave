@@ -105,6 +105,9 @@ void Chess::on_quitButton_clicked()
         socket->write("quit");
         qApp->quit();
     }
+    else{
+        ui->quitButton->setText(tr("退出游戏"));
+    }
 
 }
 

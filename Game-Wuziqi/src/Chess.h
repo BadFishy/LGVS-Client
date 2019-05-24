@@ -17,6 +17,7 @@
 #include <QSound>
 #include "ui_Chess.h"
 
+
 const bool test = 1;
 namespace Ui
 {
@@ -39,14 +40,14 @@ private slots:
     void readData();
     void sendChessInfo(QString chess);
     void sendWin();
-
+    void handleTimeout();
 
 private:
     Ui::Chess *ui;
 
     QTcpServer *server;
     QTcpSocket *socket;
-
+    QTimer *m_pTimer;
     int hintNum;
 };
 
