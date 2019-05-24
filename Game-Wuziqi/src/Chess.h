@@ -41,10 +41,11 @@ private slots:
     void sendChessInfo(QString chess);
     void sendWin();
     void handleTimeout();
+    void writewin();
 
 private:
     Ui::Chess *ui;
-
+    int exit;
     QTcpServer *server;
     QTcpSocket *socket;
     QTimer *m_pTimer;

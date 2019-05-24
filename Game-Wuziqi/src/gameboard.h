@@ -52,7 +52,7 @@ public:
         }
 
         QString toString() {
-            return QString("%1 %2 ").
+            return QString("%1,%2").
                    arg(QString::number(row),
                        QString::number(col));
         }

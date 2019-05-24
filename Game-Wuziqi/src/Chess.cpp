@@ -1,6 +1,6 @@
 #include "Chess.h"
 #include "QHostInfo"
-
+#include <windows.h>
 
 Chess::Chess(QWidget *parent,QString arg[]):
     QMainWindow(parent),
@@ -10,7 +10,7 @@ Chess::Chess(QWidget *parent,QString arg[]):
 
     hintNum = 0;
     qDebug() << arg[0]<< arg[1];
-
+    exit=0;
     char* ip;
     if(test == 0){
         QHostInfo info = QHostInfo::fromName("play.niconiconi.cc");
@@ -28,7 +28,7 @@ Chess::Chess(QWidget *parent,QString arg[]):
         if(socket->waitForConnected(10000))
         {
 
-            QString sendbuf = "wuziqi " + arg[1] +" " + arg[0];
+            QString sendbuf = "wuziqi," + arg[1] +"," + arg[0];
             qDebug()<< sendbuf;
             socket->write(sendbuf.toStdString().data());//发送场次握手识别码
 
@@ -46,15 +46,16 @@ Chess::Chess(QWidget *parent,QString arg[]):
         }
     }
     else if(arg[0]=="0"){//是主场
+        ui->gameboard->setDisabled(true);
         socket = new QTcpSocket(this);
         socket->connectToHost(ip,10299);
         bool isconnect = false;
         if(socket->waitForConnected(10000))
         {
-            QString sendbuf = "wuziqi " + arg[1] +" " + arg[0];
+            QString sendbuf = "wuziqi," + arg[1] +"," + arg[0];
             qDebug()<< sendbuf;
             socket->write(sendbuf.toStdString().data());//发送场次握手识别码
-            ui->gameboard->setDisabled(true);
+
 
             ui->gameboard->playerColor = Qt::black;
             ui->gameboard->enemyColor = Qt::white;
@@ -93,18 +94,26 @@ Chess::~Chess()
 
 void Chess::on_quitButton_clicked()
 {
+
     //ui->quitButton->setEnabled(false);
     //ui->quitButton->setText(tr("等待"));
-    auto quit = QMessageBox::question(this,tr("退出"),tr("你将投降认输"),QMessageBox::Yes|QMessageBox::No);
+    if(exit==0){
+        auto quit = QMessageBox::question(this,tr("退出"),tr("你将投降认输"),QMessageBox::Yes|QMessageBox::No);
 
-    if(quit == QMessageBox::Yes)
-    {
-        //socket->write("agree quit ");
-        //socket->waitForBytesWritten();
-        //sendWin();
-        socket->write("quit");
+        if(quit == QMessageBox::Yes)
+        {
+            //socket->write("agree quit ");
+            //socket->waitForBytesWritten();
+            //sendWin();
+            socket->write("quit");
+            qApp->quit();
+        }
+    }
+    else{
         qApp->quit();
     }
+
+
 
 }
 
@@ -112,80 +121,49 @@ void Chess::on_quitButton_clicked()
 
 void Chess::readData()
 {
-    //qDebug() << "receive!!";
-    auto messages = QString(socket->readAll()).split(' ');
-//    for(int i = 0; i < messages.length(); i++)
-//        qDebug() << messages[i];
-    bool finished = false;
 
+    char* recv = socket->readAll().data();
+    qDebug()<<recv;
+    const char *sep = ","; //分割接收的数据
+    char *p;
+    QString messages[5];
+    p = strtok((char*)recv, sep);
+    messages[0] = p;
+    qDebug()<<p;
+    bool finished = false;
     while(!finished)
     {
         if(messages[0] == "add")
         {
-            //qDebug() << "receive add";
+            for (int i = 0; i < 3; i++) {
+                        messages[i] = p;
+                        p = strtok(NULL, sep);
+                    }
             emit addChess(messages[1].toInt(), messages[2].toInt());
-
             ui->turnLabel->setText(tr("您的回合，请点击棋盘下棋"));
-
-            if(!messages[3].isEmpty())
-            {
-                auto temp = messages;
-                messages.clear();
-                for(int i = 3; i < temp.length(); i++)
-                    messages << temp[i];
-            }
-            else
                 finished = true;
         }
 
         else if(messages[0] == "starthei")
         {
-            //QSound::play(":/..");
-            ui->turnLabel->setText(tr("对方已连接！ 您的回合，请点击棋盘下棋"));
+           ui->turnLabel->setText(tr("对方已连接！ 您的回合，请点击棋盘下棋"));
            ui->gameboard->setDisabled(false);
-            if(!messages[1].isEmpty())
-            {
-                auto temp = messages;
-                messages.clear();
-                for(int i = 1; i < temp.length(); i++)
-                    messages << temp[i];
-            }
-            else
-                finished = true;
         }
 
         else if(messages[0] == "startbai")
         {
-            //QSound::play(":/..");
             ui->turnLabel->setText(tr("对方已连接！ 请等待他思考"));
-            if(!messages[1].isEmpty())
-            {
-                auto temp = messages;
-                messages.clear();
-                for(int i = 1; i < temp.length(); i++)
-                    messages << temp[i];
-            }
-            else
-                finished = true;
         }
 
 
         else if(messages[0] == "win")
         {
-            //QSound::play(":/..");
-
             QMessageBox *mmm;
             mmm = new QMessageBox(QMessageBox::NoIcon,tr("失败"),tr("<strong>失败乃成功之母，很遗憾您输了！</strong>"),QMessageBox::Ok,this);
             mmm->show();
-            if(!messages[1].isEmpty())
-            {
-                auto temp = messages;
-                messages.clear();
-                for(int i = 1; i < temp.length(); i++)
-                    messages << temp[i];
-            }
-            else
-                finished = true;
+            ui->gameboard->setDisabled(true);
+            ui->quitButton->setText(tr("退出游戏"));
+            exit=1;
         }
 
 
@@ -195,71 +173,19 @@ void Chess::readData()
 
             if(quit == QMessageBox::Yes)
             {
-                //socket->write("agree quit ");
-                //socket->waitForBytesWritten();
-                //sendWin();
                 qApp->quit();
             }
-            else
-                //socket->write("reject quit ");
-
-            if(!messages[1].isEmpty())
-            {
-                auto temp = messages;
-                messages.clear();
-                for(int i = 1; i < temp.length(); i++)
-                    messages << temp[i];
-            }
-            else
-                finished = true;
         }
-
-        else if(messages[0] == "agree")
-        {
-           if(messages[1] == "quit")
-            {
-                qApp->quit();
-
-                if(!messages[2].isEmpty())
-                {
-                    auto temp = messages;
-                    messages.clear();
-                    for(int i = 2; i < temp.length(); i++)
-                        messages << temp[i];
-                }
-                else
-                    finished = true;
-            }
-        }
-
-        else if(messages[0] == "reject")
-        {
-
-            if(messages[2] == "quit")
-            {
-                ui->quitButton->setText("退出游戏");
-                ui->quitButton->setEnabled(true);
-
-                if(!messages[2].isEmpty())
-                {
-                    auto temp = messages;
-                    messages.clear();
-                    for(int i = 2; i < temp.length(); i++)
-                        messages << temp[i];
-                }
-                else
-                    finished = true;
-            }
-        }
+        finished = true;
     }
 }
 
 void Chess::sendChessInfo(QString chess)
 {
     ui->turnLabel->setText(tr("对方正在思考，请等待"));
-    socket->write((QString("add ") + chess).toStdString().c_str());//读取的时候会多一个空格..
+    socket->write((QString("add,") + chess).toStdString().c_str());//读取的时候会多一个空格..
 }
-
+QTimer *mTimer;
 void Chess::sendWin()
 {
 //    QSound::play(":/...");
@@ -267,14 +193,34 @@ void Chess::sendWin()
     message = new QMessageBox(QMessageBox::NoIcon, tr("胜利"), tr("<strong>恭喜您，获得胜利！</strong>"),QMessageBox::Ok,this);
 
     message->show();
-    qDebug() << "send win";
-    socket->write("win ");
+    //qDebug() << "send win";
+    connect(this, SIGNAL(addChess(int,int)), ui->gameboard, SLOT(addEnemysChess(int,int)));
+
+    ui->gameboard->setDisabled(true);
+    ui->quitButton->setText(tr("退出游戏"));
+    exit=1;
+
+    mTimer = new QTimer(this);
+    connect(mTimer, SIGNAL(timeout()), this, SLOT(writewin()));
+    mTimer->start(1000);
+
 }
+
 
 void Chess::handleTimeout()
 {
     qDebug() << "send heart";
     socket->write("heart");
+}
+
+void Chess::writewin()
+{
+    qDebug() << "send win";
+    socket->write("win");
+    if(mTimer->isActive()){
+            mTimer->stop();
+    }
+
 }
 
 
