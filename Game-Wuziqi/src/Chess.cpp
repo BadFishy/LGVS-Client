@@ -6,6 +6,14 @@ Chess::Chess(QWidget *parent,QString arg[]):
     QMainWindow(parent),
     ui(new Ui::Chess)
 {
+//    if(arg[0]=="err"){
+//        auto quit = QMessageBox::question(this,tr("错误"),tr("请使用客户端启动"),QMessageBox::Yes);
+
+//        if(quit == QMessageBox::Yes)
+//        {
+//            qApp->exit(0);
+//        }
+//    }
     ui->setupUi(this);
 
     hintNum = 0;
@@ -19,7 +27,7 @@ Chess::Chess(QWidget *parent,QString arg[]):
         ip = ba.data();
     }
     else ip = "127.0.0.1";
-
+    isconnect = false;
     if(arg[0]=="1"){//是客场
 
         socket = new QTcpSocket(this);
@@ -39,17 +47,21 @@ Chess::Chess(QWidget *parent,QString arg[]):
             connect(socket, SIGNAL(readyRead()), this, SLOT(readData()));
             connect(ui->gameboard, SIGNAL(addChess(QString)), this, SLOT(sendChessInfo(QString)));
             connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
+            isconnect = true;
         }
         else
         {
-            QMessageBox::warning(this, tr("错误"), tr("连接失败！"));
+            QMessageBox box(QMessageBox::Critical,"错误","连接服务器失败");
+                box.setStandardButtons (QMessageBox::Ok);
+                box.setButtonText (QMessageBox::Ok,QString("确 定"));
+                box.exec ();
         }
     }
     else if(arg[0]=="0"){//是主场
         ui->gameboard->setDisabled(true);
         socket = new QTcpSocket(this);
         socket->connectToHost(ip,10299);
-        bool isconnect = false;
+
         if(socket->waitForConnected(10000))
         {
             QString sendbuf = "wuziqi," + arg[1] +"," + arg[0];
@@ -66,12 +78,14 @@ Chess::Chess(QWidget *parent,QString arg[]):
             connect(ui->gameboard, SIGNAL(addChess(QString)), this, SLOT(sendChessInfo(QString)));
             connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
 
-
             isconnect = true;
         }
         else
         {
-            QMessageBox::warning(this, tr("错误"), tr("连接失败！"));
+            QMessageBox box(QMessageBox::Critical,"错误","连接服务器失败");
+                box.setStandardButtons (QMessageBox::Ok);
+                box.setButtonText (QMessageBox::Ok,QString("确 定"));
+                box.exec ();
         }
     }
 

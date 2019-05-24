@@ -17,7 +17,6 @@
 #include <QSound>
 #include "ui_Chess.h"
 
-
 const bool test = 1;
 namespace Ui
 {
@@ -31,6 +30,7 @@ class Chess : public QMainWindow
 public:
     Chess(QWidget *parent, QString arg[]);
     ~Chess();
+    bool isconnect;
 
 signals:
     void addChess(int row,int col);
