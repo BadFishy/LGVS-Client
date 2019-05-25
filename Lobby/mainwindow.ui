@@ -156,30 +156,10 @@
         </property>
         <item>
          <property name="text">
-          <string>用户名：Lulu</string>
+          <string>加载中...</string>
          </property>
          <property name="textAlignment">
           <set>AlignLeading|AlignVCenter</set>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>UID：1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>积分：1000</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>上次登陆时间：</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1997-07-18 14:00</string>
          </property>
         </item>
        </widget>

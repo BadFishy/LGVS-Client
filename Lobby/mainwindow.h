@@ -27,9 +27,10 @@ public:
     bool addRome(QString hid,QString homename, int man, int maxman,int state);
     bool addPlayer(QString uid,QString username, QString regtime,int money);
 
-    void f5_games(QString gamesinfo[]);
+    void f5_games(QStringList gamesinfo);
     void f5_rooms(QString);
     void f5_home();
+    void f5_user(QStringList);
 
     void put(QString xx);
 
@@ -39,6 +40,7 @@ private slots:
     bool on_BAK_clicked();
     void on_ready_clicked();
     void readData();
+    void handleTimeout();
 
 private:
     Ui::MainWindow *ui;
@@ -54,7 +56,9 @@ private:
 
      QString gamelist[100];
 
+     QTimer *m_pTimer;
 
+     int userid=0;
 
 };
 

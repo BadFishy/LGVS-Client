@@ -82,7 +82,9 @@ MainWindow::MainWindow(QWidget *parent, char *arg[]) :
     socket->connectToHost(ip,10199);
     if(socket->waitForConnected(10000))
     {
+
         QString sendbuf = "lobby," + (QString)arg[1]+",end";
+        userid = ((QString)arg[1]).toInt();
         //qDebug()<< sendbuf;
         socket->write(sendbuf.toStdString().data());//发送场次握手识别码
 
@@ -90,10 +92,11 @@ MainWindow::MainWindow(QWidget *parent, char *arg[]) :
     }
 
 
+    m_pTimer = new QTimer(this);
+    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(handleTimeout()));//心跳包
+    m_pTimer->start(3000);
     //********************************************************************************
     ui->ready->hide();
-    //f5_games();
-
 
 }
 
@@ -107,15 +110,16 @@ void MainWindow::readData()
 
 
     QString QS = QString::fromLocal8Bit(str.data());
-    const char* recv = QS.toStdString().c_str();
+    QStringList messages = QS.split(",");
+    //const char* recv = QS.toStdString().c_str();
     //qDebug()<<QS;
     //qDebug()<<recv;
 
-    const char *sep = ","; //分割接收的数据
-    char *p;
-    QString messages[100];
-    p = strtok((char*)recv, sep);
-    messages[0] = p;
+    //const char *sep = ","; //分割接收的数据
+    //char *p;
+
+//    p = strtok((char*)recv, sep);
+//    messages[0] = p;
     //qDebug()<<p;
     bool finished = false;
     while(!finished)
@@ -125,30 +129,33 @@ void MainWindow::readData()
         {
 
             if(lobby_flag == 0){
-                for (int i = 0; i < 2; i++) {
-                            messages[i] = p;
-                            //qDebug()<<p<<i;
-                            p = strtok(NULL, sep);
-                        }
-                int l=messages[1].toInt()*4+2;
-                for (int i = 2; i < l; i++) {
-                            messages[i] = p;
-                            //qDebug()<<p<<i;
-                            p = strtok(NULL, sep);
-                        }
+//                for (int i = 0; i < 2; i++) {
+//                            messages[i] = p;
+//                            //qDebug()<<p<<i;
+//                            p = strtok(NULL, sep);
+//                        }
+//                int l=messages[1].toInt()*4+2;
+//                for (int i = 2; i < l; i++) {
+//                            messages[i] = p;
+//                            //qDebug()<<p<<i;
+//                            p = strtok(NULL, sep);
+//                        }
                 f5_games(messages);
             }
 
             else if(lobby_flag == 1){
                 f5_rooms(QS);
             }
-
-
         }
 
-        else if(messages[0] == "starthei")
+        else if(messages[0] == "lobbyok")
         {
-
+            f5_user(messages);
+            on_F5_clicked();
+        }
+        else if(messages[0] == "user")
+        {
+            f5_user(messages);
         }
 
         ui->F5->setDisabled(false);
@@ -166,7 +173,7 @@ MainWindow::~MainWindow()
 
 
 
-void MainWindow::f5_games(QString info[]){
+void MainWindow::f5_games(QStringList info){
     //qDebug()<< info[1];
     nowcid=0;
     ui->title->setText("游戏大厅");
@@ -289,6 +296,24 @@ void MainWindow::f5_home(){
     ui->games->resizeColumnsToContents();
     ui->games->resizeRowsToContents();
 
+}
+
+void MainWindow::f5_user(QStringList info){
+        //ui->userinfo->count();
+    ui->userinfo->QListWidget::clear();
+    ui->userinfo->addItem("用户名："+info[3]);
+    ui->userinfo->addItem("UID："+info[2]);
+    ui->userinfo->addItem("积分："+info[6]);
+    ui->userinfo->addItem("注册时间：");
+    ui->userinfo->addItem(info[4]);
+    ui->userinfo->addItem("最近活动时间：");
+    ui->userinfo->addItem(info[5]);
+
+
+//            int table_i = (ui->games->rowCount());//获取表目前的行数
+//            ui->games->setRowCount(table_i+1);//使表增加一行
+//            ui->games->setItem(table_i,0,new QTableWidgetItem(hid));//房间编号
+//            ui->games->item(table_i, 0)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 }
 
 
@@ -495,4 +520,10 @@ void MainWindow::put(QString xx){//向底部信息栏发送消息
 void MainWindow::on_ready_clicked()
 {
 
+}
+
+void MainWindow::handleTimeout()
+{
+    //socket->write(("user,"+QString::number(userid)).toLatin1().data());
+    socket->write("heart");
 }
