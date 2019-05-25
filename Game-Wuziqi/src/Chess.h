@@ -18,6 +18,7 @@
 #include "ui_Chess.h"
 
 const bool test = 1;
+
 namespace Ui
 {
 class Chess;

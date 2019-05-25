@@ -5,19 +5,13 @@ int main (int argc, char *argv[])
 {
     QApplication a(argc,argv);
     QString str[4];
-
-
-
     if(argc>1){
         for(int i=0;i<argc;i++){
             str[i] = QString(QLatin1String(argv[i+1]));
         }
-
     }
     else{
         str[0] = "err";
-
-
     }
 
     Chess c(0,str);

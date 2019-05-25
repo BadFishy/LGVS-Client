@@ -49,8 +49,7 @@ Chess::Chess(QWidget *parent,QString arg[]):
             connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
             isconnect = true;
         }
-        else
-        {
+        else{
             QMessageBox box(QMessageBox::Critical,"错误","连接服务器失败");
                 box.setStandardButtons (QMessageBox::Ok);
                 box.setButtonText (QMessageBox::Ok,QString("确 定"));
@@ -80,8 +79,7 @@ Chess::Chess(QWidget *parent,QString arg[]):
 
             isconnect = true;
         }
-        else
-        {
+        else{
             QMessageBox box(QMessageBox::Critical,"错误","连接服务器失败");
                 box.setStandardButtons (QMessageBox::Ok);
                 box.setButtonText (QMessageBox::Ok,QString("确 定"));

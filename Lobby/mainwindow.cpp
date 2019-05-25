@@ -4,13 +4,18 @@
 #include "QtWidgets"
 #include "time.h"
 #include "QDateTime"
+#include "QHostInfo"
+#include <windows.h>
 
-
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent, char *arg[]) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+
     ui->setupUi(this);
+
+
+
     //this->setStyleSheet("background-color: rgb(255,255,255);");
     QPalette palette(this->palette());
     palette.setColor(QPalette::Background, Qt::white);
@@ -63,26 +68,106 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->message->document()->setMaximumBlockCount(100);//设置信息栏最多100行
 
     //********************************************************************************
+    char* ip;
+    if(test == 0){
+        QHostInfo info = QHostInfo::fromName("play.niconiconi.cc");
+        QString host = info.addresses().first().toString();
+        QByteArray ba = host.toLatin1(); // must
+        ip = ba.data();
+    }
+    else ip = "127.0.0.1";
+
+
+    socket = new QTcpSocket(this);
+    socket->connectToHost(ip,10199);
+    if(socket->waitForConnected(10000))
+    {
+        QString sendbuf = "lobby," + (QString)arg[1]+",end";
+        //qDebug()<< sendbuf;
+        socket->write(sendbuf.toStdString().data());//发送场次握手识别码
+
+        connect(socket, SIGNAL(readyRead()), this, SLOT(readData()));
+    }
+
+
+    //********************************************************************************
     ui->ready->hide();
-    f5_games();
+    //f5_games();
 
 
 }
+
+void MainWindow::readData()
+{
+
+    QByteArray ba = socket->readAll();
+    std::string str = ba.toStdString();
+    //char* recv = socket->readAll().data();
+    //QString msg = QString::fromGBK(ba);
+
+
+    QString QS = QString::fromLocal8Bit(str.data());
+    const char* recv = QS.toStdString().c_str();
+    //qDebug()<<QS;
+    //qDebug()<<recv;
+
+    const char *sep = ","; //分割接收的数据
+    char *p;
+    QString messages[100];
+    p = strtok((char*)recv, sep);
+    messages[0] = p;
+    //qDebug()<<p;
+    bool finished = false;
+    while(!finished)
+    {       
+
+        if(messages[0] == "f5")
+        {
+
+            if(lobby_flag == 0){
+                for (int i = 0; i < 2; i++) {
+                            messages[i] = p;
+                            //qDebug()<<p<<i;
+                            p = strtok(NULL, sep);
+                        }
+                int l=messages[1].toInt()*4+2;
+                for (int i = 2; i < l; i++) {
+                            messages[i] = p;
+                            //qDebug()<<p<<i;
+                            p = strtok(NULL, sep);
+                        }
+                f5_games(messages);
+            }
+
+            else if(lobby_flag == 1){
+                f5_rooms(QS);
+            }
+
+
+        }
+
+        else if(messages[0] == "starthei")
+        {
+
+        }
+
+        ui->F5->setDisabled(false);
+        ui->BAK->setDisabled(false);
+        finished = true;
+    }
+}
+
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
-int lobby_flag=0;
-/*  lobby_flag的取值
-*   0：游戏大厅
-*   1：房间大厅
-*   2：房间内
-*/
-int nowcid=0;//当前所在游戏cid
 
-void MainWindow::f5_games(){
+
+
+void MainWindow::f5_games(QString info[]){
+    //qDebug()<< info[1];
     nowcid=0;
     ui->title->setText("游戏大厅");
     ui->BAK->setText("退出");
@@ -90,34 +175,61 @@ void MainWindow::f5_games(){
     ui->games->setColumnCount(4);//设置表格列数
     ui->games->setRowCount(0);
     QStringList headers;
-    headers << QStringLiteral(" 编号(cid)") << QStringLiteral("游戏图标") << QStringLiteral("游戏名(game_name)")<< QStringLiteral("玩家数/最大玩家数");
+    //headers << QStringLiteral(" 编号(cid)") << QStringLiteral("游戏图标") << QStringLiteral("游戏名(game_name)")<< QStringLiteral("玩家数/最大玩家数");
+     headers << QStringLiteral(" 编号(cid)") << QStringLiteral("游戏图标") << QStringLiteral("游戏名(game_name)")<< QStringLiteral("游戏介绍（game_int）");
     ui->games->setHorizontalHeaderLabels(headers);
-    addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\1.png",(QString)"五子棋",20,"10086");
-    addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\2.png",(QString)"中国象棋",20,"10010");
-    addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\1.png",(QString)"星际争霸II",20);
+    for(int i=0,j=2;i<info[1].toInt();i++){
+        QString picname = "C:\\Git\\LGVS-Client\\Lobby\\gameicons\\" + info[j] + ".png";
+       addGame(picname,info[j+1],info[j+3],info[j]);
+       gamelist[info[j].toInt()]=info[j+1];
+       j+=4;
+    }
+//    addGame((QString)"C:\\Git\\LGVS-Client\\Lobby\\gameicons\\1.png",(QString)"五子棋",20,"1");
 
     //行和列的大小设为与内容相匹配
     ui->games->resizeColumnsToContents();
     ui->games->resizeRowsToContents();
 }
 
-void MainWindow::f5_rooms(){
-    QString title;
-    switch ( nowcid )
-    {
-    case 10086 :
-        title="五子棋";
-        break;
-    case 10010 :
-        title="中国象棋";
-        break;
-    case 1 :
-        title="星际争霸II";
-        break;
-    default:
-        title="选择房间";
-        break;
-    }
+void MainWindow::f5_rooms(QString info){
+
+    QStringList list = info.split(",");
+
+//    const char* recv = info.toStdString().c_str();
+//    qDebug()<<recv;
+
+//    const char *sep = ","; //分割接收的数据
+//    char *p;
+//    QString messages[10];
+//    p = strtok((char*)recv, sep);
+//    messages[0] = p;
+//    //qDebug()<<p;
+//    for (int i = 0; i < 2; i++) {
+//            messages[i] = p;
+//            qDebug()<<p<<i;
+//            p = strtok(NULL, sep);
+//     }
+
+
+    QString title=gamelist[nowcid];
+//    switch ( nowcid )
+//    {
+//    case 1 :
+//        title="五子棋";
+//        break;
+//    case 2 :
+//        title="中国象棋";
+//        break;
+//    case 3 :
+//        title="星际争霸II";
+//        break;
+//    default:
+//        title="选择房间";
+//        break;
+//    }
+
+
+
     ui->title->setText(title);
     ui->ready->hide();
     ui->BAK->setText("返回");
@@ -128,13 +240,34 @@ void MainWindow::f5_rooms(){
     headers << QStringLiteral(" 编号(hid)") << QStringLiteral("房间名(home_class)") << QStringLiteral("玩家数/最大玩家数")<< QStringLiteral("房间状态");
     ui->games->setHorizontalHeaderLabels(headers);
 
-    addRome("1","五子棋房间", 1, 2,1);
-    addRome("12","五子棋房间", 1, 2,0);
-    addRome("123","五子棋房间", 0, 2,2);
+        for(int i=0,j=0;i<list[1].toInt();i++){
+           addRome(list[j+2],title+"房间",list[j+5].toInt(),list[j+4].toInt(),list[j+6].toInt());
+           ui->games->resizeColumnsToContents();
+           ui->games->resizeRowsToContents();
+            j+=5;
+        }
+
+
+    //int l = messages[1].toInt()*5+2;
+//    for(int i=0;i<messages[1].toInt();i++){
+//        for (int j = 2; j < 7; j++) {
+//                    messages[i] = p;
+//                    qDebug()<< p<< i<< j;
+//                    p = strtok(NULL, sep);
+//                }
+//       addRome(messages[2],title+"房间",messages[3].toInt(),messages[4].toInt(),messages[6].toInt());
+//       ui->games->resizeColumnsToContents();
+//       ui->games->resizeRowsToContents();
+
+//    }
+
+//    addRome("1","五子棋房间", 1, 2,1);
+//    addRome("12","五子棋房间", 1, 2,0);
+//    addRome("123","五子棋房间", 0, 2,2);
 
     //行和列的大小设为与内容相匹配
-    ui->games->resizeColumnsToContents();
-    ui->games->resizeRowsToContents();
+//    ui->games->resizeColumnsToContents();
+//    ui->games->resizeRowsToContents();
 
 }
 
@@ -189,6 +322,7 @@ bool MainWindow::on_games_doubleClicked(const QModelIndex &index)
 
 bool MainWindow::on_BAK_clicked()
 {
+    ui->BAK->setDisabled(true);
     qDebug() << "返回";
     if(lobby_flag==0){
         this->close();
@@ -203,14 +337,17 @@ bool MainWindow::on_BAK_clicked()
 
 bool MainWindow::on_F5_clicked()
 {
-
+    ui->F5->setDisabled(true);
     qDebug() << "刷新";
     //put("用户操作：刷新");
     if(lobby_flag==0){
-        f5_games();
+        socket->write("class");
+        //f5_games();
     }
     else if(lobby_flag==1){
-        f5_rooms();
+        QString fa = "rooms,"+QString::number(nowcid);
+        socket->write(fa.toLatin1().data());
+        //f5_rooms();
     }
     else if(lobby_flag==2){
         f5_home();
@@ -220,7 +357,40 @@ bool MainWindow::on_F5_clicked()
 }
 
 
-bool MainWindow::addGame(QPixmap pixpath, QString gamename, int maxman,QString cid)
+//bool MainWindow::addGame(QPixmap pixpath, QString gamename, int maxman,QString cid)
+//{
+//    int table_i = (ui->games->rowCount());//获取表目前的行数
+//    ui->games->setRowCount(table_i+1);//使表增加一行
+//    if(cid=="NULL"){
+//            ui->games->setItem(table_i,0,new QTableWidgetItem(QString::number(table_i+1)));//自定编号
+//    }
+//    else{
+//        ui->games->setItem(table_i,0,new QTableWidgetItem(cid));//自定编号
+//    }
+
+//    ui->games->item(table_i, 0)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+//    QPixmap pix(pixpath);
+//    QLabel *label = new QLabel;
+//    label->setPixmap(QPixmap(pix).scaled(72,72));
+//    label->setMinimumSize( 80, 80 );
+//    label->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);//图片居中
+
+//    ui->games->setCellWidget(table_i,1,label);//显示图片label
+
+//    ui->games->setItem(table_i,2,new QTableWidgetItem(gamename));
+//    ui->games->item(table_i, 2)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+////    ui->games->setItem(table_i,3,new QTableWidgetItem("0/"+QString::number(maxman)));
+////    ui->games->item(table_i, 3)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+
+//    //行和列的大小设为与内容相匹配
+//    ui->games->resizeColumnsToContents();
+//    ui->games->resizeRowsToContents();
+//}
+
+bool MainWindow::addGame(QPixmap pixpath, QString gamename, QString info,QString cid)
 {
     int table_i = (ui->games->rowCount());//获取表目前的行数
     ui->games->setRowCount(table_i+1);//使表增加一行
@@ -244,13 +414,15 @@ bool MainWindow::addGame(QPixmap pixpath, QString gamename, int maxman,QString c
     ui->games->setItem(table_i,2,new QTableWidgetItem(gamename));
     ui->games->item(table_i, 2)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-    ui->games->setItem(table_i,3,new QTableWidgetItem("0/"+QString::number(maxman)));
+    ui->games->setItem(table_i,3,new QTableWidgetItem(info));
     ui->games->item(table_i, 3)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
 
     //行和列的大小设为与内容相匹配
     ui->games->resizeColumnsToContents();
     ui->games->resizeRowsToContents();
 }
+
 
 
 bool MainWindow::addRome(QString hid,QString homename, int man, int maxman,int state)
@@ -282,6 +454,7 @@ bool MainWindow::addRome(QString hid,QString homename, int man, int maxman,int s
 
     ui->games->setItem(table_i,3,new QTableWidgetItem(statestr));
     ui->games->item(table_i, 3)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
 
     //行和列的大小设为与内容相匹配
     ui->games->resizeColumnsToContents();
