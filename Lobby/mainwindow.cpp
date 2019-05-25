@@ -149,6 +149,14 @@ void MainWindow::readData()
             else if(lobby_flag == 1){
                 f5_rooms(QS);
             }
+            else if(lobby_flag == 2){
+                if(nowready == 1){
+                ui->ready->setText("取消准备");
+                ui->ready->setDisabled(false);
+                }
+                f5_home(messages);
+            }
+
         }
 
         else if(messages[0] == "lobbyok")
@@ -281,19 +289,23 @@ void MainWindow::f5_rooms(QString info){
 
 }
 
-void MainWindow::f5_home(){
+void MainWindow::f5_home(QStringList info){
     ui->ready->show();
-    ui->title->setText("房间");
+    ui->title->setText(gamelist[nowcid]+"房间"+QString::number(nowhid));
     ui->games->QTableWidget::clear();
-    ui->games->setColumnCount(4);//设置表格列数
+    ui->games->setColumnCount(5);//设置表格列数
     ui->games->setRowCount(0);
     QStringList headers;
-    headers << QStringLiteral(" 用户编号(uid)") << QStringLiteral("用户名") << QStringLiteral("注册时间")<< QStringLiteral("积分");
+    headers << QStringLiteral(" UID") << QStringLiteral("用户名")<< QStringLiteral("积分（money）") << QStringLiteral("注册时间")<< QStringLiteral("状态");
     ui->games->setHorizontalHeaderLabels(headers);
+    for(int i=0,j=2;i<info[1].toInt();i++){
+       addPlayer(info[j],info[j+1], info[j+2], info[j+3].toInt(),info[j+4].toInt());
+       j+=5;
+    }
 
-    addPlayer("1","huai", "123", 200);
-    addPlayer("12","lulu", "123", 2000);
-    addPlayer("123","shuchong", "123", 20);
+//    addPlayer("1","huai", "123", 200,1);
+//    addPlayer("12","lulu", "123", 2000,2);
+//    addPlayer("123","shuchong", "123", 20,3);
 
     //行和列的大小设为与内容相匹配
     ui->games->resizeColumnsToContents();
@@ -342,6 +354,7 @@ bool MainWindow::on_games_doubleClicked(const QModelIndex &index)
         QString hid = gameid->text(); //获取第1列内容
         put("用户操作：打开房间["+hid+"]");
         lobby_flag ++;
+        nowhid = hid.toInt();
         on_F5_clicked();
         return true;
     }
@@ -354,6 +367,12 @@ bool MainWindow::on_BAK_clicked()
     qDebug() << "返回";
     if(lobby_flag==0){
         this->close();
+    }
+    else if(lobby_flag==2){
+        put("用户操作：返回");
+        lobby_flag--;
+        on_F5_clicked();
+        sendstr("heart");
     }
     else{
         put("用户操作：返回");
@@ -378,7 +397,9 @@ bool MainWindow::on_F5_clicked()
         //f5_rooms();
     }
     else if(lobby_flag==2){
-        f5_home();
+        QString fa = "home,"+QString::number(nowhid);
+        socket->write(fa.toLatin1().data());
+        //f5_home();
     }
 
     return true;
@@ -490,7 +511,7 @@ bool MainWindow::addRome(QString hid,QString homename, int man, int maxman,int s
 }
 
 
-bool MainWindow::addPlayer(QString uid,QString username, QString regtime,int money)
+bool MainWindow::addPlayer(QString uid,QString username, QString regtime,int money,int ready)
 {
     int table_i = (ui->games->rowCount());//获取表目前的行数
     ui->games->setRowCount(table_i+1);//使表增加一行
@@ -500,12 +521,29 @@ bool MainWindow::addPlayer(QString uid,QString username, QString regtime,int mon
     ui->games->setItem(table_i,1,new QTableWidgetItem(username));
     ui->games->item(table_i, 1)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-    ui->games->setItem(table_i,2,new QTableWidgetItem(regtime));
+    ui->games->setItem(table_i,2,new QTableWidgetItem(QString::number(money)));
     ui->games->item(table_i, 2)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
-
-    ui->games->setItem(table_i,3,new QTableWidgetItem(QString::number(money)));
+    ui->games->setItem(table_i,3,new QTableWidgetItem(regtime));
     ui->games->item(table_i, 3)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+
+    QString readystr;
+    switch ( ready )
+    {
+    case 1 :
+        readystr="已准备";
+        break;
+    case 0 :
+        readystr="等待中";
+        break;
+    case 2 :
+        readystr="游戏中";
+        break;
+    }
+
+    ui->games->setItem(table_i,4,new QTableWidgetItem(readystr));
+    ui->games->item(table_i, 4)->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 
     //行和列的大小设为与内容相匹配
     ui->games->resizeColumnsToContents();
@@ -522,11 +560,37 @@ void MainWindow::put(QString xx){//向底部信息栏发送消息
 
 void MainWindow::on_ready_clicked()
 {
+    if(nowready == 0){
+        nowready = 1;
+        ui->ready->setText("已准备");
+        ui->ready->setDisabled(true);
+    }
+    else if(nowready == 1){
+        nowready = 0;
+        ui->ready->setText("准备");
+        //ui->ready->setDisabled(false);
+    }
 
 }
 
 void MainWindow::handleTimeout()
 {
+    if(lobby_flag == 2){
+        sendstr("ready,"+QString::number(nowready)+","+QString::number(nowhid));
+    }
     //socket->write(("user,"+QString::number(userid)).toLatin1().data());
-    socket->write("heart");
+    else{
+        sendstr("heart");
+    }
+    //socket->write("heart");
+}
+
+bool sendlock = false;
+void MainWindow::sendstr(QString in){
+    while(sendlock){
+        Sleep(100);
+    }
+    sendlock = true;
+    socket->write(in.toLatin1().data());
+    sendlock = false;
 }

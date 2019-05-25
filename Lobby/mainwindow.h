@@ -25,13 +25,13 @@ public:
    // bool addGame(QPixmap pix,QString gamename,int maxman,QString cid="NULL");
     bool addGame(QPixmap pix,QString gamename, QString info,QString cid="NULL");
     bool addRome(QString hid,QString homename, int man, int maxman,int state);
-    bool addPlayer(QString uid,QString username, QString regtime,int money);
+    bool addPlayer(QString uid,QString username, QString regtime,int money,int ready);
 
     void f5_games(QStringList gamesinfo);
     void f5_rooms(QString);
-    void f5_home();
+    void f5_home(QStringList gamesinfo);
     void f5_user(QStringList);
-
+    void sendstr(QString in);
     void put(QString xx);
 
 private slots:
@@ -53,11 +53,13 @@ private:
      *   2：房间内
      */
      int nowcid=0;//当前所在游戏cid
+     int nowhid=0;//当前所在房间hid
+     int nowready = 0;
 
      QString gamelist[100];
 
      QTimer *m_pTimer;
-
+     ;
      int userid=0;
 
 };
