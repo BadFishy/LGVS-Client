@@ -8,6 +8,7 @@
 #include <QtNetwork/QHostAddress>
 #include <QMessageBox>
 #include <QDebug>
+#include <QProcess>
 
 const bool test = 1;
 
@@ -34,6 +35,8 @@ public:
     void sendstr(QString in);
     void put(QString xx);
 
+public slots:
+    void finished(int exitCode, QProcess::ExitStatus exitStatus);
 private slots:
     bool on_F5_clicked();
     bool on_games_doubleClicked(const QModelIndex &index);
@@ -59,8 +62,8 @@ private:
      QString gamelist[100];
 
      QTimer *m_pTimer;
-     ;
      int userid=0;
+
 
 };
 
