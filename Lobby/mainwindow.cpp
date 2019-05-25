@@ -104,12 +104,15 @@ void MainWindow::readData()
 {
 
     QByteArray ba = socket->readAll();
-    std::string str = ba.toStdString();
+    //std::string str = ba.toStdString();
+    std::string str(ba.constData(), ba.length());
+    //qDebug()<<str;
     //char* recv = socket->readAll().data();
     //QString msg = QString::fromGBK(ba);
 
 
     QString QS = QString::fromLocal8Bit(str.data());
+    qDebug()<<QS;
     QStringList messages = QS.split(",");
     //const char* recv = QS.toStdString().c_str();
     //qDebug()<<QS;

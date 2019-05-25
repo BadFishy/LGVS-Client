@@ -12,7 +12,7 @@
 #include <QCryptographicHash>
 #include "jiami.h"
 #include <QMessageBox>
-
+#include <QProcess>
 
 
 using namespace std;
@@ -172,12 +172,16 @@ int MainWindow::on_pushButton_clicked()
         recv(sock, recvBuf2, 100, 0);
         //qDebug() << recvBuf2;
         QString mi = QString(QLatin1String(recvBuf2));
+        QStringList messages = mi.split(",");
         closesocket(sock);
 
         WSACleanup();
 
-        if(mi == "1"){
+        if(messages[0] == "1"){
                 qDebug() << "登陆成功！";
+                QProcess process(this);
+                process.startDetached("lobby.exe " + messages[1]);
+                qApp->exit(0);
             }
         else if(mi == "2"){
             QMessageBox::critical(NULL, "错误", "用户名不存在！");
