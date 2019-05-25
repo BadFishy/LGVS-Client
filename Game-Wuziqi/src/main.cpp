@@ -35,6 +35,9 @@ int main (int argc, char *argv[])
         c.setWindowTitle("五子棋 —— 客场白棋");
     }
 
+    else if(str[0]=="2"){
+        c.setWindowTitle("五子棋 —— 凉糕对战平台 房间号："+str[1]);
+    }
     if(c.isconnect == false){
         return -1;
     }

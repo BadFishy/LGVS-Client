@@ -34,6 +34,7 @@ public:
     void f5_user(QStringList);
     void sendstr(QString in);
     void put(QString xx);
+    void sendag(QString in);
 
 public slots:
     void finished(int exitCode, QProcess::ExitStatus exitStatus);
@@ -44,6 +45,7 @@ private slots:
     void on_ready_clicked();
     void readData();
     void handleTimeout();
+    void sendTimeout(QString in);
 
 private:
     Ui::MainWindow *ui;
@@ -62,8 +64,10 @@ private:
      QString gamelist[100];
 
      QTimer *m_pTimer;
+     QTimer *send_pTimer;
      int userid=0;
-
+    int gameCode;
+    int gamestart=0;
 
 };
 

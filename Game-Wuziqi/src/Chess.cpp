@@ -57,7 +57,7 @@ Chess::Chess(QWidget *parent,QString arg[]):
         }
     }
     else if(arg[0]=="0"){//是主场
-        ui->gameboard->setDisabled(true);
+        //ui->gameboard->setDisabled(true);
         socket = new QTcpSocket(this);
         socket->connectToHost(ip,10299);
 
@@ -70,12 +70,35 @@ Chess::Chess(QWidget *parent,QString arg[]):
 
             ui->gameboard->playerColor = Qt::black;
             ui->gameboard->enemyColor = Qt::white;
-            ui->gameboard->inRound = true;
+
             ui->turnLabel->setText(tr("等待对方连接"));
 
             connect(socket, SIGNAL(readyRead()), this, SLOT(readData()));
             connect(ui->gameboard, SIGNAL(addChess(QString)), this, SLOT(sendChessInfo(QString)));
             connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
+
+            isconnect = true;
+        }
+        else{
+            QMessageBox box(QMessageBox::Critical,"错误","连接服务器失败");
+                box.setStandardButtons (QMessageBox::Ok);
+                box.setButtonText (QMessageBox::Ok,QString("确 定"));
+                box.exec ();
+        }
+    }
+
+    else if(arg[0].toInt()>1){//谁先进谁主
+        uid=arg[0].toInt()-1;
+        //ui->gameboard->setDisabled(true);
+        socket = new QTcpSocket(this);
+        socket->connectToHost(ip,10299);
+
+        if(socket->waitForConnected(10000))
+        {
+            QString sendbuf = "wuziqi," + arg[1] +",2";
+            qDebug()<< sendbuf;
+            socket->write(sendbuf.toStdString().data());//发送场次握手识别码
+            connect(socket, SIGNAL(readyRead()), this, SLOT(readData()));
 
             isconnect = true;
         }
@@ -118,11 +141,14 @@ void Chess::on_quitButton_clicked()
             //socket->waitForBytesWritten();
             //sendWin();
             socket->write("quit");
-            qApp->quit();
+            qApp->exit(0);
         }
     }
+    else if (exit==1){
+        qApp->exit(uid);
+    }
     else{
-        qApp->quit();
+        qApp->exit(0);
     }
 
 
@@ -158,12 +184,15 @@ void Chess::readData()
 
         else if(messages[0] == "starthei")
         {
+           ui->heibai->setText(tr("黑方 "));
            ui->turnLabel->setText(tr("对方已连接！ 您的回合，请点击棋盘下棋"));
-           ui->gameboard->setDisabled(false);
+           //ui->gameboard->setDisabled(false);
+           ui->gameboard->inRound = true;
         }
 
         else if(messages[0] == "startbai")
         {
+            ui->heibai->setText(tr("白方 "));
             ui->turnLabel->setText(tr("对方已连接！ 请等待他思考"));
         }
 
@@ -175,7 +204,7 @@ void Chess::readData()
             mmm->show();
             ui->gameboard->setDisabled(true);
             ui->quitButton->setText(tr("退出游戏"));
-            exit=1;
+            exit=2;
         }
 
 
@@ -185,9 +214,42 @@ void Chess::readData()
 
             if(quit == QMessageBox::Yes)
             {
-                qApp->quit();
+                qApp->exit(uid);
             }
         }
+
+        else if(messages[0] == "start")
+        {
+            for (int i = 0; i < 2; i++) {
+                        messages[i] = p;
+                        p = strtok(NULL, sep);
+                    }
+            if(messages[1]=="0"){
+                //ui->gameboard->setDisabled(true);
+
+                ui->gameboard->playerColor = Qt::black;
+                ui->gameboard->enemyColor = Qt::white;
+                //ui->gameboard->inRound = true;
+                ui->turnLabel->setText(tr("等待对方连接"));
+
+                connect(ui->gameboard, SIGNAL(addChess(QString)), this, SLOT(sendChessInfo(QString)));
+                connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
+
+                isconnect = true;
+            }
+            else if(messages[1]=="1"){
+                ui->gameboard->playerColor = Qt::white;
+                ui->gameboard->enemyColor = Qt::black;
+                ui->turnLabel->setText(tr("等待对方连接"));
+
+                connect(ui->gameboard, SIGNAL(addChess(QString)), this, SLOT(sendChessInfo(QString)));
+                connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
+                isconnect = true;
+            }
+
+
+        }
+
         finished = true;
     }
 }
@@ -202,7 +264,7 @@ void Chess::sendWin()
 {
 //    QSound::play(":/...");
     QMessageBox *message;
-    message = new QMessageBox(QMessageBox::NoIcon, tr("胜利"), tr("<strong>恭喜您，获得胜利！</strong>"),QMessageBox::Ok,this);
+    message = new QMessageBox(QMessageBox::NoIcon, tr("胜利"), tr("<strong>恭喜您，获得胜利！\n注意：请勿直接关闭游戏，请使用退出游戏按钮退出，以免无法获得积分</strong>"),QMessageBox::Ok,this);
 
     message->show();
     //qDebug() << "send win";

@@ -150,11 +150,24 @@ void MainWindow::readData()
                 f5_rooms(QS);
             }
             else if(lobby_flag == 2){
-                if(nowready == 1){
+                if(messages[1]=="manle"){
+                    //lobby_flag--;
+                    on_BAK_clicked();
+                        QMessageBox box(QMessageBox::Critical,"错误","房间满员");
+                        box.setStandardButtons (QMessageBox::Ok);
+                        box.setButtonText (QMessageBox::Ok,QString("确 定"));
+                        box.exec ();
+                   // f5_rooms(QS);
+
+                }
+                else if(nowready == 1){
                 ui->ready->setText("取消准备");
                 ui->ready->setDisabled(false);
-                }
                 f5_home(messages);
+                }
+                else{
+                    f5_home(messages);
+                }
             }
 
         }
@@ -170,16 +183,28 @@ void MainWindow::readData()
         }
         else if(messages[0] == "allready")
         {
-            ui->ready->setText("游戏中");
-            ui->ready->setDisabled(true);
-            ui->BAK->setDisabled(true);
-            nowready = 3;
+            if(gamestart=1){
 
+            }
+            else{
+                gamestart=1;
+                ui->ready->setText("游戏中");
+                ui->ready->setDisabled(true);
+                ui->BAK->setDisabled(true);
+                nowready = 2;
 
-            nowready = 1;
-            ui->ready->setText("准备");
-            ui->ready->setDisabled(false);
-            ui->BAK->setDisabled(false);
+                QProcess process(this);
+                QString qidong =QString::number(nowcid)+".exe " +QString::number(userid+1)+" " + QString::number(nowhid);
+                put("系统消息：启动"+qidong);
+                process.start(qidong);
+                //process.startDetached(qidong);
+                process.waitForStarted();
+                connect(&process,SIGNAL(finished(int,QProcess::ExitStatus)),SLOT(finished(int,QProcess::ExitStatus)));
+                //process.waitForFinished();
+                //QString strResult = QString::fromLocal8Bit(process.readAllStandardOutput());
+
+            }
+
         }
 
 
@@ -378,6 +403,7 @@ bool MainWindow::on_games_doubleClicked(const QModelIndex &index)
 
 bool MainWindow::on_BAK_clicked()
 {
+    //m_pTimer->stop();
     ui->BAK->setDisabled(true);
     qDebug() << "返回";
     if(lobby_flag==0){
@@ -386,8 +412,8 @@ bool MainWindow::on_BAK_clicked()
     else if(lobby_flag==2){
         put("用户操作：返回");
         lobby_flag--;
-        sendstr("heart");
-        Sleep(100);
+        //sendstr("heart");
+        //Sleep(100);
         on_F5_clicked();
 
     }
@@ -396,13 +422,20 @@ bool MainWindow::on_BAK_clicked()
         lobby_flag--;
         on_F5_clicked();
     }
+   // m_pTimer->start(3000);
 
 }
-int gameCode;
+
 void MainWindow::finished(int exitCode,QProcess::ExitStatus exitStatus)
 {
 //    qDebug()<<"finished";
     gameCode=exitCode;
+    put("系统提示：游戏返回值（"+ QString::number(gameCode)+"）");
+    nowready = 1;
+    ui->ready->setText("准备");
+    ui->ready->setDisabled(false);
+    ui->BAK->setDisabled(false);
+    gamestart = 0;
 //    qDebug()<<exitCode;// 被调用程序的main返回的int
     //qDebug()<<exitStatus;// QProcess::ExitStatus(NormalExit)
 //    qDebug() <<"finished-output-readAll:";
@@ -415,43 +448,28 @@ void MainWindow::finished(int exitCode,QProcess::ExitStatus exitStatus)
 
 bool MainWindow::on_F5_clicked()
 {
-    nowcid=1;
-    nowhid=2;
-    userid=2;
-    QProcess process(this);
-    QString qidong ="C:\\Git\\LGVS-Client\\Lobby\\app\\"+ QString::number(nowcid)+".exe " + QString::number(userid) +" " + QString::number(nowhid);
-    qDebug()<<qidong;
-    QStringList arguments;
 
-    arguments<< "start" << QString::number(nowcid) << ".exe"<< "2"<< "2";
-    process.start("1.exe 0 2");
-    //process.startDetached(qidong);
-    process.waitForStarted();
-    connect(&process,SIGNAL(finished(int,QProcess::ExitStatus)),SLOT(finished(int,QProcess::ExitStatus)));
-    process.waitForFinished();
-    QString strResult = QString::fromLocal8Bit(process.readAllStandardOutput());
-    put("系统提示：游戏返回值（"+ QString::number(gameCode)+"）");
-    qDebug()<<"ok";
 
-//    ui->F5->setDisabled(true);
-//    qDebug() << "刷新";
-//    //put("用户操作：刷新");
-//    if(lobby_flag==0){
-//        socket->write("class");
-//        //f5_games();
-//    }
-//    else if(lobby_flag==1){
-//        QString fa = "rooms,"+QString::number(nowcid);
-//        //socket->write(fa.toLatin1().data());
-//        sendstr(fa.toLatin1().data());
-//        //f5_rooms();
-//    }
-//    else if(lobby_flag==2){
-//        QString fa = "home,"+QString::number(nowhid);
-//        //socket->write(fa.toLatin1().data());
-//        sendstr(fa.toLatin1().data());
-//        //f5_home();
-//    }
+    ui->F5->setDisabled(true);
+    qDebug() << "刷新";
+    //put("用户操作：刷新");
+    if(lobby_flag==0){
+        socket->write("class");
+        //f5_games();
+    }
+    else if(lobby_flag==1){
+        QString fa = "rooms,"+QString::number(nowcid);
+        //socket->write(fa.toLatin1().data());
+        sendstr(fa);
+        //sendag(fa);
+        //f5_rooms();
+    }
+    else if(lobby_flag==2){
+        QString fa = "home,"+QString::number(nowhid);
+        //socket->write(fa.toLatin1().data());
+        sendstr(fa.toLatin1().data());
+        //f5_home();
+    }
 
     return true;
 }
@@ -643,5 +661,26 @@ void MainWindow::sendstr(QString in){
     }
     sendlock = true;
     socket->write(in.toLatin1().data());
+    Sleep(100);
     sendlock = false;
+}
+
+void MainWindow::sendag(QString in){
+    while(sendlock){
+        Sleep(100);
+    }
+    sendlock = true;
+    send_pTimer= new QTimer(this);
+    connect(send_pTimer, SIGNAL(timeout()), this, SLOT(sendTimeout(QString in)));
+    send_pTimer->start(3000);
+    socket->write(in.toLatin1().data());
+    Sleep(100);
+    sendlock = false;
+}
+
+
+void MainWindow::sendTimeout(QString in)
+{
+    sendstr(in);
+    send_pTimer->stop();
 }

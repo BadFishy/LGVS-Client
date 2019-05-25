@@ -15,6 +15,7 @@
 #include <QDebug>
 #include <QDateTime>
 #include <QSound>
+#include <QString>
 #include "ui_Chess.h"
 
 const bool test = 1;
@@ -51,6 +52,7 @@ private:
     QTcpSocket *socket;
     QTimer *m_pTimer;
     int hintNum;
+    int uid=0;
 };
 
 
