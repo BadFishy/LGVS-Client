@@ -189,6 +189,9 @@ int MainWindow::on_pushButton_clicked()
         else if(mi == "3"){
             QMessageBox::critical(NULL, "错误", "密码错误！");
         }
+        else if(mi == "7"){
+            QMessageBox::critical(NULL, "错误", "用户已在线！如果这不是你自己请联系管理员");
+        }
         else{
             QMessageBox::critical(NULL, "错误", "登陆失败！");
         }

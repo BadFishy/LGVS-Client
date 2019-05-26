@@ -36,6 +36,7 @@ public:
     void put(QString xx);
     void sendag(QString in);
 
+    void connectnet();
 public slots:
     void finished(int exitCode, QProcess::ExitStatus exitStatus);
 private slots:
@@ -45,7 +46,7 @@ private slots:
     void on_ready_clicked();
     void readData();
     void handleTimeout();
-    void sendTimeout(QString in);
+    void sendTimeout();
 
 private:
     Ui::MainWindow *ui;

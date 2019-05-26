@@ -68,6 +68,28 @@ MainWindow::MainWindow(QWidget *parent, char *arg[]) :
     ui->message->document()->setMaximumBlockCount(100);//设置信息栏最多100行
 
     //********************************************************************************
+
+    userid = ((QString)arg[1]).toInt();
+    send_pTimer= new QTimer(this);
+    connect(send_pTimer, SIGNAL(timeout()), this, SLOT(sendTimeout()));
+
+
+    connectnet();
+
+    m_pTimer = new QTimer(this);
+
+
+    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(handleTimeout()));//心跳包
+
+    m_pTimer->start(3000);
+    //********************************************************************************
+    ui->ready->hide();
+
+}
+int errtimer=0;
+int firstopen=0;
+
+void MainWindow::connectnet(){
     char* ip;
     if(test == 0){
         QHostInfo info = QHostInfo::fromName("play.niconiconi.cc");
@@ -80,27 +102,53 @@ MainWindow::MainWindow(QWidget *parent, char *arg[]) :
 
     socket = new QTcpSocket(this);
     socket->connectToHost(ip,10199);
-    if(socket->waitForConnected(10000))
+    if(socket->waitForConnected(1000))
     {
+        send_pTimer->stop();
+        QString sendbuf = "lobby," + QString::number(userid);
+        if(firstopen==1){
+            sendbuf+=",chonglian";
+        }
+        else{
+            sendbuf+=",end";
+        }
 
-        QString sendbuf = "lobby," + (QString)arg[1]+",end";
-        userid = ((QString)arg[1]).toInt();
+        errtimer=0;
+        firstopen=1;
         //qDebug()<< sendbuf;
-        socket->write(sendbuf.toStdString().data());//发送握手识别码
-
-
-
+        sendstr(sendbuf.toStdString().data());//发送握手识别码
         connect(socket, SIGNAL(readyRead()), this, SLOT(readData()));
+
+    }
+    else{
+        errtimer++;
+        if(firstopen==1||errtimer>1){
+            QMessageBox box(QMessageBox::Critical,"错误","网络连接失败,将尝试重连第"+QString::number(errtimer)+"次");
+            box.setStandardButtons (QMessageBox::Ok);
+            box.setButtonText (QMessageBox::Ok,QString("重 连"));
+            QTimer::singleShot(3000,&box,SLOT(close()));
+            box.exec ();
+        }
+        else if(firstopen==0){
+            QMessageBox box(QMessageBox::Critical,"错误","无法连接到服务器");
+            box.setStandardButtons (QMessageBox::Ok);
+            box.setButtonText (QMessageBox::Ok,QString("关 闭"));
+            box.exec ();
+            errtimer=11;
+        }
+        else if(errtimer>10){
+            QMessageBox box(QMessageBox::Critical,"错误","网络连接失败,重连失败"+QString::number(errtimer)+"次");
+            box.setStandardButtons (QMessageBox::Ok);
+            box.setButtonText (QMessageBox::Ok,QString("退 出"));
+            box.exec ();
+            qApp->quit();
+        }
     }
 
 
-    m_pTimer = new QTimer(this);
-    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(handleTimeout()));//心跳包
-    m_pTimer->start(3000);
-    //********************************************************************************
-    ui->ready->hide();
-
 }
+
+
 
 void MainWindow::readData()
 {
@@ -130,9 +178,10 @@ void MainWindow::readData()
     while(!finished)
     {       
 
+
         if(messages[0] == "f5")
         {
-
+            send_pTimer->stop();
             if(lobby_flag == 0){
 //                for (int i = 0; i < 2; i++) {
 //                            messages[i] = p;
@@ -175,15 +224,27 @@ void MainWindow::readData()
 
         else if(messages[0] == "lobbyok")
         {
+            send_pTimer->stop();
             f5_user(messages);
             on_F5_clicked();
         }
         else if(messages[0] == "user")
         {
+            send_pTimer->stop();
             f5_user(messages);
+        }
+        else if(messages[0] == "loss")
+        {
+            send_pTimer->stop();
+            QMessageBox box(QMessageBox::Critical,"错误","用户未登录！");
+            box.setStandardButtons (QMessageBox::Ok);
+            box.setButtonText (QMessageBox::Ok,QString("确 定"));
+            box.exec ();
+
         }
         else if(messages[0] == "allready")
         {
+            send_pTimer->stop();
             if(gamestart==1){
                 qDebug()<<"游戏已经开始";
             }
@@ -439,11 +500,11 @@ void MainWindow::finished(int exitCode,QProcess::ExitStatus exitStatus)
     ui->BAK->setDisabled(false);
     //gamestart = 0;
     if(gameCode<1){
-        sendstr("gameover");
+        sendag("gameover");
         put("系统提示：游戏战败");
     }
     else{
-        sendstr("win,"+QString::number(gameCode));
+        sendag("win,"+QString::number(gameCode));
         put("系统提示：游戏胜利");
     }
 
@@ -469,20 +530,20 @@ bool MainWindow::on_F5_clicked()
     qDebug() << "刷新";
     //put("用户操作：刷新");
     if(lobby_flag==0){
-        socket->write("class");
+        sendag("class");
         //f5_games();
     }
     else if(lobby_flag==1){
         QString fa = "rooms,"+QString::number(nowcid);
         //socket->write(fa.toLatin1().data());
-        sendstr(fa);
+        sendag(fa);
         //sendag(fa);
         //f5_rooms();
     }
     else if(lobby_flag==2){
         QString fa = "home,"+QString::number(nowhid);
         //socket->write(fa.toLatin1().data());
-        sendstr(fa.toLatin1().data());
+        sendag(fa.toLatin1().data());
         //f5_home();
     }
 
@@ -666,7 +727,7 @@ void MainWindow::handleTimeout()
     else if(lobby_flag==1){
         QString fa = "rooms,"+QString::number(nowcid);
         //socket->write(fa.toLatin1().data());
-        sendstr(fa);
+        sendag(fa);
         //sendag(fa);
         //f5_rooms();
     }
@@ -683,7 +744,7 @@ void MainWindow::sendstr(QString in){
     }
     sendlock = true;
     socket->write(in.toLatin1().data());
-    Sleep(100);
+    Sleep(20);
     sendlock = false;
 }
 
@@ -692,17 +753,22 @@ void MainWindow::sendag(QString in){
         Sleep(100);
     }
     sendlock = true;
-    send_pTimer= new QTimer(this);
-    connect(send_pTimer, SIGNAL(timeout()), this, SLOT(sendTimeout(QString in)));
+    //send_pTimer= new QTimer(this);
     send_pTimer->start(3000);
     socket->write(in.toLatin1().data());
-    Sleep(100);
+    Sleep(20);
     sendlock = false;
 }
 
 
-void MainWindow::sendTimeout(QString in)
+void MainWindow::sendTimeout()
 {
-    sendstr(in);
-    send_pTimer->stop();
+    ui->title->setText("已掉线，重连中");
+    if(errtimer>10){
+        qApp->quit();
+    }
+
+    connectnet();
+    //sendstr(in);断线重连
+
 }
