@@ -21,3 +21,5 @@ FORMS += \
 
 RESOURCES += \
     resource.qrc
+
+RC_FILE += version.rc

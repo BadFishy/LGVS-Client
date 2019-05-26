@@ -159,99 +159,101 @@ void Chess::on_quitButton_clicked()
 
 void Chess::readData()
 {
-
-    char* recv = socket->readAll().data();
-    qDebug()<<recv;
-    const char *sep = ","; //分割接收的数据
-    char *p;
-    QString messages[5];
-    p = strtok((char*)recv, sep);
-    messages[0] = p;
-    qDebug()<<p;
-    bool finished = false;
-    while(!finished)
-    {
-        if(messages[0] == "add")
+    if(exit==0){
+        char* recv = socket->readAll().data();
+        qDebug()<<recv;
+        const char *sep = ","; //分割接收的数据
+        char *p;
+        QString messages[5];
+        p = strtok((char*)recv, sep);
+        messages[0] = p;
+        qDebug()<<p;
+        bool finished = false;
+        while(!finished)
         {
-            for (int i = 0; i < 3; i++) {
-                        messages[i] = p;
-                        p = strtok(NULL, sep);
-                    }
-            emit addChess(messages[1].toInt(), messages[2].toInt());
-            ui->turnLabel->setText(tr("您的回合，请点击棋盘下棋"));
-                finished = true;
-        }
-
-        else if(messages[0] == "starthei")
-        {
-           ui->heibai->setText(tr("黑方 "));
-           ui->turnLabel->setText(tr("对方已连接！ 您的回合，请点击棋盘下棋"));
-           //ui->gameboard->setDisabled(false);
-           ui->gameboard->inRound = true;
-        }
-
-        else if(messages[0] == "startbai")
-        {
-            ui->heibai->setText(tr("白方 "));
-            ui->turnLabel->setText(tr("对方已连接！ 请等待他思考"));
-        }
-
-
-        else if(messages[0] == "win")
-        {
-            QMessageBox *mmm;
-            mmm = new QMessageBox(QMessageBox::NoIcon,tr("失败"),tr("<strong>失败乃成功之母，很遗憾您输了！</strong>"),QMessageBox::Ok,this);
-            mmm->show();
-            ui->gameboard->setDisabled(true);
-            ui->quitButton->setText(tr("退出游戏"));
-            exit=2;
-        }
-
-
-        else if(messages[0] == "quit")
-        {
-            auto quit = QMessageBox::question(this,tr("退出"),tr("对方投降了"),QMessageBox::Yes|QMessageBox::No);
-
-            if(quit == QMessageBox::Yes)
+            if(messages[0] == "add")
             {
-                qApp->exit(uid);
+                for (int i = 0; i < 3; i++) {
+                            messages[i] = p;
+                            p = strtok(NULL, sep);
+                        }
+                emit addChess(messages[1].toInt(), messages[2].toInt());
+                ui->turnLabel->setText(tr("您的回合，请点击棋盘下棋"));
+                    finished = true;
             }
+
+            else if(messages[0] == "starthei")
+            {
+               ui->heibai->setText(tr("黑方 "));
+               ui->turnLabel->setText(tr("对方已连接！ 您的回合，请点击棋盘下棋"));
+               //ui->gameboard->setDisabled(false);
+               ui->gameboard->inRound = true;
+            }
+
+            else if(messages[0] == "startbai")
+            {
+                ui->heibai->setText(tr("白方 "));
+                ui->turnLabel->setText(tr("对方已连接！ 请等待他思考"));
+            }
+
+
+            else if(messages[0] == "win")
+            {
+                QMessageBox *mmm;
+                mmm = new QMessageBox(QMessageBox::NoIcon,tr("失败"),tr("<strong>失败乃成功之母，很遗憾您输了！</strong>"),QMessageBox::Ok,this);
+                mmm->show();
+                ui->gameboard->setDisabled(true);
+                ui->quitButton->setText(tr("退出游戏"));
+                exit=2;
+            }
+
+
+            else if(messages[0] == "quit")
+            {
+                auto quit = QMessageBox::question(this,tr("退出"),tr("对方投降了"),QMessageBox::Yes|QMessageBox::No);
+
+                if(quit == QMessageBox::Yes)
+                {
+                    qApp->exit(uid);
+                }
+            }
+
+            else if(messages[0] == "start")
+            {
+                for (int i = 0; i < 2; i++) {
+                            messages[i] = p;
+                            p = strtok(NULL, sep);
+                        }
+                if(messages[1]=="0"){
+                    //ui->gameboard->setDisabled(true);
+
+                    ui->gameboard->playerColor = Qt::black;
+                    ui->gameboard->enemyColor = Qt::white;
+                    //ui->gameboard->inRound = true;
+                    ui->turnLabel->setText(tr("等待对方连接"));
+
+                    connect(ui->gameboard, SIGNAL(addChess(QString)), this, SLOT(sendChessInfo(QString)));
+                    connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
+
+                    isconnect = true;
+                }
+                else if(messages[1]=="1"){
+                    ui->gameboard->playerColor = Qt::white;
+                    ui->gameboard->enemyColor = Qt::black;
+                    ui->turnLabel->setText(tr("等待对方连接"));
+
+                    connect(ui->gameboard, SIGNAL(addChess(QString)), this, SLOT(sendChessInfo(QString)));
+                    connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
+                    isconnect = true;
+                }
+
+
+            }
+
+            finished = true;
         }
-
-        else if(messages[0] == "start")
-        {
-            for (int i = 0; i < 2; i++) {
-                        messages[i] = p;
-                        p = strtok(NULL, sep);
-                    }
-            if(messages[1]=="0"){
-                //ui->gameboard->setDisabled(true);
-
-                ui->gameboard->playerColor = Qt::black;
-                ui->gameboard->enemyColor = Qt::white;
-                //ui->gameboard->inRound = true;
-                ui->turnLabel->setText(tr("等待对方连接"));
-
-                connect(ui->gameboard, SIGNAL(addChess(QString)), this, SLOT(sendChessInfo(QString)));
-                connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
-
-                isconnect = true;
-            }
-            else if(messages[1]=="1"){
-                ui->gameboard->playerColor = Qt::white;
-                ui->gameboard->enemyColor = Qt::black;
-                ui->turnLabel->setText(tr("等待对方连接"));
-
-                connect(ui->gameboard, SIGNAL(addChess(QString)), this, SLOT(sendChessInfo(QString)));
-                connect(ui->gameboard, SIGNAL(win()), this, SLOT(sendWin()));
-                isconnect = true;
-            }
-
-
-        }
-
-        finished = true;
     }
+
 }
 
 void Chess::sendChessInfo(QString chess)

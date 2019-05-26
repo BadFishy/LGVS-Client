@@ -53,6 +53,7 @@ private:
     QTimer *m_pTimer;
     int hintNum;
     int uid=0;
+    bool finish =false;
 };
 
 

@@ -180,7 +180,7 @@ int MainWindow::on_pushButton_clicked()
         if(messages[0] == "1"){
                 qDebug() << "登陆成功！";
                 QProcess process(this);
-                process.startDetached("lobby.exe " + messages[1]);
+                process.startDetached(".\\bin\\lobby.exe " + messages[1]);
                 qApp->exit(0);
             }
         else if(mi == "2"){

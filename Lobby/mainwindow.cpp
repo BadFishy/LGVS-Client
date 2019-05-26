@@ -86,7 +86,9 @@ MainWindow::MainWindow(QWidget *parent, char *arg[]) :
         QString sendbuf = "lobby," + (QString)arg[1]+",end";
         userid = ((QString)arg[1]).toInt();
         //qDebug()<< sendbuf;
-        socket->write(sendbuf.toStdString().data());//发送场次握手识别码
+        socket->write(sendbuf.toStdString().data());//发送握手识别码
+
+
 
         connect(socket, SIGNAL(readyRead()), this, SLOT(readData()));
     }
@@ -165,10 +167,10 @@ void MainWindow::readData()
                 f5_home(messages);
                 }
                 else{
+                    gamestart = 0;
                     f5_home(messages);
                 }
             }
-
         }
 
         else if(messages[0] == "lobbyok")
@@ -193,7 +195,8 @@ void MainWindow::readData()
                 nowready = 2;
 
                 process = new QProcess(this);
-                QString qidong =QString::number(nowcid)+".exe " +QString::number(userid+1)+" " + QString::number(nowhid);
+
+                QString qidong =".\\apps\\"+QString::number(nowcid)+".exe " +QString::number(userid+1)+" " + QString::number(nowhid);
                 put("系统消息：启动"+qidong);
                 process->start(qidong);
                 //process.startDetached(qidong);
@@ -236,7 +239,7 @@ void MainWindow::f5_games(QStringList info){
      headers << QStringLiteral(" 编号(cid)") << QStringLiteral("游戏图标") << QStringLiteral("游戏名(game_name)")<< QStringLiteral("游戏介绍（game_int）");
     ui->games->setHorizontalHeaderLabels(headers);
     for(int i=0,j=2;i<info[1].toInt();i++){
-        QString picname = "C:\\Git\\LGVS-Client\\Lobby\\gameicons\\" + info[j] + ".png";
+        QString picname = "apps\\" + info[j] + ".png";
        addGame(picname,info[j+1],info[j+3],info[j]);
        gamelist[info[j].toInt()]=info[j+1];
        j+=4;
@@ -413,6 +416,7 @@ bool MainWindow::on_BAK_clicked()
         lobby_flag--;
         //sendstr("heart");
         //Sleep(100);
+        nowready=0;
         on_F5_clicked();
 
     }
@@ -433,7 +437,7 @@ void MainWindow::finished(int exitCode,QProcess::ExitStatus exitStatus)
     ui->ready->setText("准备");
     ui->ready->setDisabled(false);
     ui->BAK->setDisabled(false);
-    gamestart = 0;
+    //gamestart = 0;
     if(gameCode<1){
         sendstr("gameover");
         put("系统提示：游戏战败");

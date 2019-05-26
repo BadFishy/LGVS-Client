@@ -43,3 +43,5 @@ FORMS += \
 LIBS += -lWs2_32
 
 QT += core gui network
+
+RC_FILE += version.rc

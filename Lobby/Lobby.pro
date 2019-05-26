@@ -21,3 +21,5 @@ HEADERS  += mainwindow.h \
     clickablelabel.h
 
 FORMS    += mainwindow.ui
+
+RC_FILE += version.rc
