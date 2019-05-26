@@ -158,7 +158,6 @@ void MainWindow::readData()
                         box.setButtonText (QMessageBox::Ok,QString("确 定"));
                         box.exec ();
                    // f5_rooms(QS);
-
                 }
                 else if(nowready == 1){
                 ui->ready->setText("取消准备");
@@ -183,8 +182,8 @@ void MainWindow::readData()
         }
         else if(messages[0] == "allready")
         {
-            if(gamestart=1){
-
+            if(gamestart==1){
+                qDebug()<<"游戏已经开始";
             }
             else{
                 gamestart=1;
@@ -193,14 +192,14 @@ void MainWindow::readData()
                 ui->BAK->setDisabled(true);
                 nowready = 2;
 
-                QProcess process(this);
+                process = new QProcess(this);
                 QString qidong =QString::number(nowcid)+".exe " +QString::number(userid+1)+" " + QString::number(nowhid);
                 put("系统消息：启动"+qidong);
-                process.start(qidong);
+                process->start(qidong);
                 //process.startDetached(qidong);
-                process.waitForStarted();
-                connect(&process,SIGNAL(finished(int,QProcess::ExitStatus)),SLOT(finished(int,QProcess::ExitStatus)));
-                //process.waitForFinished();
+                process->waitForStarted();
+                connect(process,SIGNAL(finished(int,QProcess::ExitStatus)),SLOT(finished(int,QProcess::ExitStatus)));
+                //process->waitForFinished();
                 //QString strResult = QString::fromLocal8Bit(process.readAllStandardOutput());
 
             }
@@ -430,12 +429,24 @@ void MainWindow::finished(int exitCode,QProcess::ExitStatus exitStatus)
 {
 //    qDebug()<<"finished";
     gameCode=exitCode;
-    put("系统提示：游戏返回值（"+ QString::number(gameCode)+"）");
-    nowready = 1;
+    nowready = 0;
     ui->ready->setText("准备");
     ui->ready->setDisabled(false);
     ui->BAK->setDisabled(false);
     gamestart = 0;
+    if(gameCode<1){
+        sendstr("gameover");
+        put("系统提示：游戏战败");
+    }
+    else{
+        sendstr("win,"+QString::number(gameCode));
+        put("系统提示：游戏胜利");
+    }
+
+    //put("系统提示：游戏返回值（"+ QString::number(gameCode)+"）");
+
+
+
 //    qDebug()<<exitCode;// 被调用程序的main返回的int
     //qDebug()<<exitStatus;// QProcess::ExitStatus(NormalExit)
 //    qDebug() <<"finished-output-readAll:";
@@ -648,6 +659,13 @@ void MainWindow::handleTimeout()
         sendstr("ready,"+QString::number(nowready)+","+QString::number(nowhid));
     }
     //socket->write(("user,"+QString::number(userid)).toLatin1().data());
+    else if(lobby_flag==1){
+        QString fa = "rooms,"+QString::number(nowcid);
+        //socket->write(fa.toLatin1().data());
+        sendstr(fa);
+        //sendag(fa);
+        //f5_rooms();
+    }
     else{
         sendstr("heart");
     }

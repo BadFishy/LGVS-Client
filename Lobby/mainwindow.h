@@ -68,7 +68,7 @@ private:
      int userid=0;
     int gameCode;
     int gamestart=0;
-
+    QProcess *process;
 };
 
 void f5_games(Ui::MainWindow ui);
